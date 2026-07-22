@@ -3,7 +3,7 @@
     "description": "科技主线股票池配置。fixed_pool 为固定池（按细分方向分类），candidate_pool 为候选池（上限见 candidate_max）。",
     "candidate_max": 16,
     "sector_alert_threshold_pct": 2.0,
-    "last_run": "2026-07-21"
+    "last_run": "2026-07-22"
   },
   "fixed_pool": {
     "芯片设计/IDM/制造": [
