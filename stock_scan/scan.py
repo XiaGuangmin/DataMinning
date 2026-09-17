@@ -131,18 +131,37 @@ def fetch_quotes_sina(codes):
     return result
 
 
+def fetch_kline_sina(code, days=160):
+    """新浪备用日K线（未前复权，仅在腾讯接口失败时降级使用）。"""
+    sym = market_prefix(code) + code
+    url = (f"https://quotes.sina.cn/cn/api/json_v2.php/CN_MarketData.getKLineData"
+           f"?symbol={sym}&scale=240&ma=no&datalen={days}")
+    headers = {"Referer": "https://finance.sina.com.cn"}
+    data = json.loads(http_get(url, headers=headers))
+    out = []
+    for r in data:
+        out.append((r["day"], float(r["open"]), float(r["close"]), float(r["high"]),
+                    float(r["low"]), float(r["volume"]) / 100))
+    return out
+
+
 def fetch_kline(code, days=160):
-    """日K线 [(date, open, close, high, low, volume手), ...]，前复权。"""
+    """日K线 [(date, open, close, high, low, volume手), ...]。腾讯（前复权）为主，失败自动降级新浪。"""
     sym = market_prefix(code) + code
     url = (f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
            f"?param={sym},day,,,{days},qfq")
-    data = json.loads(http_get(url))
-    node = data["data"][sym]
-    rows = node.get("qfqday") or node.get("day") or []
-    out = []
-    for r in rows:
-        out.append((r[0], float(r[1]), float(r[2]), float(r[3]), float(r[4]), float(r[5])))
-    return out
+    try:
+        data = json.loads(http_get(url))
+        node = data["data"][sym]
+        rows = node.get("qfqday") or node.get("day") or []
+        if not rows:
+            raise RuntimeError("腾讯K线为空")
+        out = []
+        for r in rows:
+            out.append((r[0], float(r[1]), float(r[2]), float(r[3]), float(r[4]), float(r[5])))
+        return out
+    except Exception:
+        return fetch_kline_sina(code, days=days)
 
 
 # ---------------------------------------------------------------- 指标
