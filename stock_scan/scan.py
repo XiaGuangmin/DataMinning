@@ -49,16 +49,18 @@ def _build_opener():
 _OPENER = _build_opener()
 
 
-def http_get(url, headers=None, timeout=15, retries=3):
+def http_get(url, headers=None, timeout=15, retries=8):
     last_err = None
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, headers=headers or {})
+            h = {"User-Agent": "Mozilla/5.0"}
+            h.update(headers or {})
+            req = urllib.request.Request(url, headers=h)
             with _OPENER.open(req, timeout=timeout) as resp:
                 return resp.read()
         except Exception as e:  # noqa: BLE001
             last_err = e
-            time.sleep(1.5 * (attempt + 1))
+            time.sleep(min(0.4 * (attempt + 1), 3))
     raise RuntimeError(f"请求失败 {url}: {last_err}")
 
 
